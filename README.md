@@ -1,5 +1,14 @@
 # ✨ AstroVision
 
+<!-- workflow-badges:start -->
+
+[![CI](https://github.com/BCIT-Formation/astro/actions/workflows/ci.yml/badge.svg)](https://github.com/BCIT-Formation/astro/actions/workflows/ci.yml)
+[![PR Check](https://github.com/BCIT-Formation/astro/actions/workflows/pr-check.yml/badge.svg)](https://github.com/BCIT-Formation/astro/actions/workflows/pr-check.yml)
+[![Release](https://github.com/BCIT-Formation/astro/actions/workflows/release.yml/badge.svg)](https://github.com/BCIT-Formation/astro/actions/workflows/release.yml)
+[![Security](https://github.com/BCIT-Formation/astro/actions/workflows/security.yml/badge.svg)](https://github.com/BCIT-Formation/astro/actions/workflows/security.yml)
+
+<!-- workflow-badges:end -->
+
 [![CI](https://github.com/BardinConsulting/astro/actions/workflows/ci.yml/badge.svg)](https://github.com/BardinConsulting/astro/actions/workflows/ci.yml)
 [![Release](https://github.com/BardinConsulting/astro/actions/workflows/release.yml/badge.svg)](https://github.com/BardinConsulting/astro/actions/workflows/release.yml)
 [![Security](https://github.com/BardinConsulting/astro/actions/workflows/security.yml/badge.svg)](https://github.com/BardinConsulting/astro/actions/workflows/security.yml)
