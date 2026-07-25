@@ -36,6 +36,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedLocale = localStorage.getItem("av-locale") as Locale | null;
     const savedTheme  = localStorage.getItem("av-theme")  as Theme  | null;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time sync from localStorage after hydration
     if (savedLocale === "en") setLocale("en");
     if (savedTheme  === "light") {
       setTheme("light");

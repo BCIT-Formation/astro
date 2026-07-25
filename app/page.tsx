@@ -57,6 +57,7 @@ export default function Home() {
     if (!s) return;
     try {
       const decoded = JSON.parse(atob(s)) as Partial<FormData>;
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time sync from URL param after mount
       setShareDefaults(decoded);
     } catch { /* malformed param — ignore */ }
   }, []);

@@ -59,6 +59,7 @@ export default function AstroForm({ onSubmit, loading, defaultValues }: Props) {
   // When share URL is decoded after mount, sync form fields
   useEffect(() => {
     if (!defaultValues || Object.keys(defaultValues).length === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync when share defaults arrive after mount
     setFormData((prev) => ({ ...prev, ...defaultValues }));
   }, [defaultValues]);
 
