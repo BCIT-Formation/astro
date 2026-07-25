@@ -8,7 +8,7 @@ Application web et mobile de prévisions astrologiques personnalisées, propuls�
 
 ## Description
 
-AstroVision calcule votre thème natal (signe solaire, lunaire, ascendant, 9 planètes) à partir de votre date, heure et lieu de naissance, puis génère une analyse astrologique détaillée via l'IA en streaming temps réel. Disponible comme application web (Docker + Vercel) et APK Android (Capacitor).
+AstroVision calcule votre thème natal (signe solaire, lunaire, ascendant, 9 planètes) à partir de votre date, heure et lieu de naissance, puis génère une analyse astrologique détaillée via l'IA en streaming temps réel. Sans clé API (ou si Claude est indisponible), un **générateur local de prévisions** (0 dépendance) prend le relais. Interface bilingue (FR/EN), mode sombre/clair, cache local 24 h, partage par URL et export PDF (impression). Disponible comme application web (Docker + Vercel) et APK Android (Capacitor).
 
 ## Architecture
 
@@ -17,7 +17,7 @@ astro/
 ├── app/
 │   ├── api/
 │   │   ├── health/route.ts     # Health-check endpoint (Docker HEALTHCHECK)
-│   │   └── predict/route.ts    # Streaming AI predictions via Claude Opus 4.6
+│   │   └── predict/route.ts    # Prédictions : streaming Claude + fallback local + rate limiting
 │   ├── layout.tsx              # Root layout + métadonnées SEO/PWA
 │   ├── page.tsx                # Page principale (Client Component)
 │   └── globals.css             # Tailwind 4 + animations personnalisées
@@ -27,9 +27,16 @@ astro/
 │   ├── PredictionDisplay.tsx   # Affichage streaming de la prédiction IA
 │   ├── StarField.tsx           # Canvas fond étoilé animé (HiDPI)
 │   └── ZodiacWheel.tsx         # Roue zodiacale Canvas (HiDPI)
+├── contexts/
+│   └── app.tsx                 # Contexte React : langue (FR/EN) + thème (sombre/clair)
 ├── lib/
 │   ├── astrology.ts            # Calculs astronomiques + constantes centralisées
-│   └── astrology.test.ts       # Tests unitaires (node:test natif)
+│   ├── astrology.test.ts       # Tests unitaires (node:test natif)
+│   ├── predict.ts              # Générateur local de prévisions (fallback sans clé API)
+│   ├── predict.test.ts         # Tests unitaires du générateur local
+│   └── i18n.ts                 # Traductions de l'interface (FR/EN)
+├── e2e/
+│   └── main.test.ts            # Tests E2E Playwright (flux principal)
 ├── public/
 │   └── manifest.json           # PWA manifest
 ├── .github/
@@ -41,6 +48,8 @@ astro/
 │       └── security.yml        # Audit npm hebdomadaire
 ├── Dockerfile                  # Multi-stage build (deps → builder → runner)
 ├── docker-compose.yml          # App + Nginx (profil production)
+├── nginx.conf                  # Reverse proxy Nginx (profil production)
+├── playwright.config.ts        # Config Playwright (E2E, serveur dev auto)
 ├── vercel.json                 # Config Vercel (régions, timeout streaming)
 └── capacitor.config.ts         # Config Android/iOS (Capacitor 8)
 ```
@@ -48,7 +57,7 @@ astro/
 ## Prérequis
 
 - Node.js 22+
-- Clé API Anthropic ([console.anthropic.com](https://console.anthropic.com))
+- Clé API Anthropic ([console.anthropic.com](https://console.anthropic.com)) — optionnelle (générateur local en secours)
 - Docker 24+ (pour le déploiement conteneurisé)
 - Android Studio (pour l'APK uniquement)
 
@@ -58,8 +67,8 @@ astro/
 git clone https://github.com/BardinConsulting/astro.git
 cd astro
 npm install
-cp .env.example .env.local
-# Éditez .env.local et renseignez votre ANTHROPIC_API_KEY
+# Optionnel : prédictions via Claude (sinon générateur local)
+echo "ANTHROPIC_API_KEY=sk-ant-..." > .env.local
 npm run dev
 # → http://localhost:3000
 ```
@@ -79,8 +88,8 @@ npm run dev
 docker build -t astrovision .
 docker run -p 3000:3000 --env-file .env.local astrovision
 
-# Avec docker-compose (app seule)
-cp .env.example .env.local   # remplir ANTHROPIC_API_KEY
+# Avec docker-compose (app seule) — ANTHROPIC_API_KEY lue depuis
+# l'environnement du shell (optionnelle)
 docker-compose up -d
 
 # Avec Nginx (profil production)
@@ -105,11 +114,11 @@ npm run android:build
 
 ## Variables d'environnement
 
-| Variable            | Obligatoire | Description                           |
-|---------------------|-------------|---------------------------------------|
-| `ANTHROPIC_API_KEY` | Oui         | Clé API Anthropic pour Claude Opus 4.6 |
+| Variable            | Obligatoire | Description                                                              |
+|---------------------|-------------|--------------------------------------------------------------------------|
+| `ANTHROPIC_API_KEY` | Non         | Clé API Anthropic pour Claude Opus 4.6 ; sans clé, générateur local utilisé |
 
-Copier `.env.example` → `.env.local` et remplir la valeur.
+Créer un fichier `.env.local` à la racine (gitignoré) avec la valeur si vous souhaitez les prédictions via Claude.
 
 ## Commandes utiles
 
@@ -122,6 +131,7 @@ Copier `.env.example` → `.env.local` et remplir la valeur.
 | `npm run lint`         | ESLint                                                   |
 | `npm run typecheck`    | Vérification TypeScript sans émission de fichiers        |
 | `npm test`             | Tests unitaires (node:test natif Node 22, 0 dépendance)  |
+| `npm run test:e2e`     | Tests E2E Playwright (lance le serveur dev automatiquement) |
 
 ## Tests
 
@@ -135,6 +145,13 @@ Couverture :
 - Invariants des constantes (`ZODIAC_SIGNS`, `PLANETS`, `ELEMENT_COLORS`)
 - Calculs de `calculateAstroData` pour des dates et lieux connus
 - Structure et cohérence des données retournées (planètes, aspects, degrés)
+- Générateur local de prévisions (`lib/predict.test.ts` : sections, thèmes, déterminisme)
+
+Tests E2E (Playwright, Chromium) :
+
+```bash
+npm run test:e2e
+```
 
 ## CI/CD
 
@@ -158,22 +175,9 @@ Couverture :
 3. Ouvrir une Pull Request vers `main`
 4. La CI doit passer (lint + typecheck + build + tests)
 
-## Améliorations proposées
+## Feuille de route
 
-### 🔴 Priorité haute
-- Rate limiting sur `/api/predict` pour éviter les abus de l'API
-- Gestion d'erreur + retry automatique côté client sur la connexion streaming
-
-### 🟠 Priorité moyenne
-- Cache côté client pour éviter de recalculer si les paramètres n'ont pas changé
-- Tests E2E avec Playwright pour les flux critiques
-- Accessibilité : aria-labels sur les Canvas, navigation clavier
-
-### 🟢 Nice to have
-- Support multilingue (i18n) — actuellement en français uniquement
-- Sauvegarde du profil astral en localStorage
-- Export PDF du thème natal
-- Partage de prédiction via URL
+Le backlog est suivi dans [TODO.md](TODO.md). Les items historiques (rate limiting, cache localStorage, i18n FR/EN, tests E2E Playwright, export PDF, partage par URL, générateur local) sont implémentés.
 
 ---
 *Technologies : **Next.js 16** · **Claude Opus 4.6** · **Tailwind CSS 4** · **Canvas API** · **Capacitor 8** · **Docker** · **Vercel***

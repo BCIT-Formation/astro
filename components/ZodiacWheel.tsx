@@ -1,4 +1,6 @@
 "use client";
+// Canvas zodiac wheel: 12 sign sectors, planet dots, and highlighted rings
+// for Sun / Moon / Ascendant. Rendered at devicePixelRatio for HiDPI.
 import { useEffect, useRef } from "react";
 import type { AstroData } from "@/lib/astrology";
 import { ZODIAC_SIGNS } from "@/lib/astrology";
@@ -64,6 +66,8 @@ export default function ZodiacWheel({ astroData }: Props) {
       "#ec4899", "#64748b", "#38bdf8", "#6366f1",
     ];
 
+    // -90° offset throughout: canvas angle 0 points at 3 o'clock,
+    // but 0° Bélier must sit at the top of the wheel
     signs.forEach((sign, i) => {
       const startAngle = (i * 30 - 90) * (Math.PI / 180);
       const endAngle = ((i + 1) * 30 - 90) * (Math.PI / 180);

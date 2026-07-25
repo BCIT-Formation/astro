@@ -1,6 +1,9 @@
 // ============================================================
 // Astrological Calculations Library
 // ============================================================
+// Planetary longitudes use truncated analytical series (Meeus-style):
+// degree-level accuracy, which is enough to place a body in its sign.
+// No ephemeris dependency — everything runs client-side.
 
 export const ZODIAC_SIGNS = [
   { name: "Bélier",      symbol: "♈", emoji: "🐏", start: 0,   element: "Feu",   quality: "Cardinal", ruler: "Mars",    dates: "21 mars - 19 avril" },
@@ -166,6 +169,8 @@ function calculateAscendant(
     -(Math.sin(lstRad) * Math.cos(oblRad) + Math.tan(latRad) * Math.sin(oblRad))
   );
   asc = (asc * 180) / Math.PI;
+  // atan2 folds the result into [-180, 180]; shift into the ecliptic
+  // half-circle that matches the local sidereal time's hemisphere
   if (asc < 0) asc += 180;
   if (Math.sin(lstRad) > 0) asc += 180;
 

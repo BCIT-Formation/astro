@@ -1,3 +1,4 @@
+// Root layout: SEO/PWA metadata and the AppProvider (locale + theme) wrapper.
 import type { Metadata } from "next";
 import "./globals.css";
 import { AppProvider } from "@/contexts/app";

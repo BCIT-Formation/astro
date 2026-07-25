@@ -1,4 +1,6 @@
 "use client";
+// Renders the streamed prediction: skeleton while waiting, incremental text
+// with a typing cursor, then a footer showing TTFT or the cache indicator.
 import { useEffect, useRef, useMemo } from "react";
 import { THEME_CONFIG, ZODIAC_SIGNS } from "@/lib/astrology";
 import { useApp } from "@/contexts/app";
@@ -31,6 +33,7 @@ export default function PredictionDisplay({ text, loading, theme, ttft, fromCach
     [text]
   );
 
+  // Keep the newest streamed text in view as chunks arrive
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTop = containerRef.current.scrollHeight;

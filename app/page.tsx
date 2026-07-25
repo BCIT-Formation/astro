@@ -1,4 +1,7 @@
 "use client";
+// Main page: computes the natal chart client-side (lib/astrology), then streams
+// the prediction from /api/predict. Adds a 24h localStorage cache, share-by-URL
+// (?s=base64(formData)) and print/PDF export.
 import { useState, useCallback, useEffect, useRef } from "react";
 import dynamic from "next/dynamic";
 import AstroForm, { type FormData } from "@/components/AstroForm";
