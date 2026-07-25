@@ -5,7 +5,7 @@
 
 import {
   createContext, useContext, useState, useEffect, useCallback,
-  type ReactNode,
+  useSyncExternalStore, type ReactNode,
 } from "react";
 import { type Locale, translations } from "@/lib/i18n";
 
@@ -27,39 +27,40 @@ const AppContext = createContext<AppContextValue>({
   toggleTheme:  () => {},
 });
 
-export function AppProvider({ children }: { children: ReactNode }) {
-  // Default to "fr" / "dark" — matches SSR output.
-  // A useEffect applies the saved preference after hydration.
-  const [locale, setLocale] = useState<Locale>("fr");
-  const [theme,  setTheme]  = useState<Theme>("dark");
+// Hydration gate: false during SSR/hydration, true on the client afterwards.
+const emptySubscribe = () => () => {};
+const useIsHydrated = () =>
+  useSyncExternalStore(emptySubscribe, () => true, () => false);
 
+export function AppProvider({ children }: { children: ReactNode }) {
+  // SSR renders the "fr" / "dark" defaults; after hydration the saved
+  // preference is read from localStorage until the user toggles.
+  const isHydrated = useIsHydrated();
+  const [localeOverride, setLocaleOverride] = useState<Locale | null>(null);
+  const [themeOverride,  setThemeOverride]  = useState<Theme  | null>(null);
+
+  const savedLocale = isHydrated ? localStorage.getItem("av-locale") : null;
+  const savedTheme  = isHydrated ? localStorage.getItem("av-theme")  : null;
+
+  const locale: Locale = localeOverride ?? (savedLocale === "en"    ? "en"    : "fr");
+  const theme:  Theme  = themeOverride  ?? (savedTheme  === "light" ? "light" : "dark");
+
+  // Keep the <html data-theme> attribute in sync with the current theme.
   useEffect(() => {
-    const savedLocale = localStorage.getItem("av-locale") as Locale | null;
-    const savedTheme  = localStorage.getItem("av-theme")  as Theme  | null;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time sync from localStorage after hydration
-    if (savedLocale === "en") setLocale("en");
-    if (savedTheme  === "light") {
-      setTheme("light");
-      document.documentElement.setAttribute("data-theme", "light");
-    }
-  }, []);
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [theme]);
 
   const toggleLocale = useCallback(() => {
-    setLocale((prev) => {
-      const next: Locale = prev === "fr" ? "en" : "fr";
-      localStorage.setItem("av-locale", next);
-      return next;
-    });
-  }, []);
+    const next: Locale = locale === "fr" ? "en" : "fr";
+    localStorage.setItem("av-locale", next);
+    setLocaleOverride(next);
+  }, [locale]);
 
   const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next: Theme = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("av-theme", next);
-      document.documentElement.setAttribute("data-theme",  next);
-      return next;
-    });
-  }, []);
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    localStorage.setItem("av-theme", next);
+    setThemeOverride(next);
+  }, [theme]);
 
   return (
     <AppContext.Provider value={{ locale, theme, t: translations[locale], toggleLocale, toggleTheme }}>

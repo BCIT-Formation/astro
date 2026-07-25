@@ -2,8 +2,9 @@
 // Main page: computes the natal chart client-side (lib/astrology), then streams
 // the prediction from /api/predict. Adds a 24h localStorage cache, share-by-URL
 // (?s=base64(formData)) and print/PDF export.
-import { useState, useCallback, useEffect, useRef } from "react";
+import { Suspense, useState, useCallback, useMemo, useRef } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import AstroForm, { type FormData } from "@/components/AstroForm";
 import PlanetGrid from "@/components/PlanetGrid";
 import PredictionDisplay from "@/components/PredictionDisplay";
@@ -38,6 +39,20 @@ function cacheSet(fd: FormData, text: string): void {
   } catch { /* storage full or unavailable */ }
 }
 
+// Decodes the ?s=… share param into form defaults. Uses useSearchParams, so it
+// must render inside a <Suspense> boundary for static prerendering.
+function ShareAwareForm({ onSubmit, loading }: { onSubmit: (data: FormData) => void; loading: boolean }) {
+  const share = useSearchParams().get("s");
+  const defaultValues = useMemo(() => {
+    if (!share) return undefined;
+    try {
+      return JSON.parse(atob(share)) as Partial<FormData>;
+    } catch { return undefined; /* malformed param, ignore */ }
+  }, [share]);
+  // key remounts the form when the share param changes
+  return <AstroForm key={share ?? ""} onSubmit={onSubmit} loading={loading} defaultValues={defaultValues} />;
+}
+
 export default function Home() {
   const { t, theme, toggleTheme, toggleLocale, locale } = useApp();
 
@@ -45,7 +60,6 @@ export default function Home() {
   const [prediction,   setPrediction]   = useState("");
   const [loading,      setLoading]      = useState(false);
   const [currentTheme, setCurrentTheme] = useState("global");
-  const [shareDefaults, setShareDefaults] = useState<Partial<FormData>>({});
   const [lastFormData, setLastFormData] = useState<FormData | null>(null);
   const [copied,       setCopied]       = useState(false);
   const [ttft,         setTtft]         = useState<number | null>(null);
@@ -54,16 +68,6 @@ export default function Home() {
   // Accumulates streaming text so we can write it to cache when done
   const fullTextRef = useRef("");
 
-  // On mount: decode ?s=… share param and pre-fill form
-  useEffect(() => {
-    const s = new URLSearchParams(window.location.search).get("s");
-    if (!s) return;
-    try {
-      const decoded = JSON.parse(atob(s)) as Partial<FormData>;
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional one-time sync from URL param after mount
-      setShareDefaults(decoded);
-    } catch { /* malformed param — ignore */ }
-  }, []);
 
   const handleSubmit = useCallback(async (formData: FormData) => {
     setLoading(true);
@@ -213,7 +217,9 @@ export default function Home() {
                 <h2 className="text-purple-300 font-bold text-lg mb-6 flex items-center gap-2">
                   <span>🌟</span> {t.form.title}
                 </h2>
-                <AstroForm onSubmit={handleSubmit} loading={loading} defaultValues={shareDefaults} />
+                <Suspense fallback={null}>
+                  <ShareAwareForm onSubmit={handleSubmit} loading={loading} />
+                </Suspense>
               </div>
             </div>
 
