@@ -1,3 +1,5 @@
+// Playwright smoke tests for the main flow.
+// The dev server is started automatically (see playwright.config.ts).
 import { test, expect } from "@playwright/test";
 
 test("page loads with AstroVision title", async ({ page }) => {

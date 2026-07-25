@@ -1,4 +1,5 @@
 "use client";
+// Full-viewport animated star background (decorative Canvas, aria-hidden).
 import { useEffect, useRef } from "react";
 
 export default function StarField() {
@@ -27,6 +28,7 @@ export default function StarField() {
 
     let dpr = 1;
     const resize = () => {
+      // Render at devicePixelRatio so stars stay crisp on HiDPI screens
       dpr = window.devicePixelRatio || 1;
       const w = window.innerWidth;
       const h = window.innerHeight;

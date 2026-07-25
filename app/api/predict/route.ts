@@ -1,3 +1,6 @@
+// Prediction endpoint: streams Claude Opus when ANTHROPIC_API_KEY is set,
+// otherwise (or on Claude failure) falls back to the local generator in
+// lib/predict.ts. The X-Prediction-Source header tells clients which path ran.
 import { NextRequest } from "next/server";
 import type { AstroData } from "@/lib/astrology";
 import { THEME_CONFIG } from "@/lib/astrology";

@@ -1,4 +1,5 @@
 "use client";
+// Planet positions list, element balance bars and major aspects summary.
 import type { AstroData } from "@/lib/astrology";
 import { getElementBalance, ELEMENT_COLORS, ELEMENT_EMOJIS } from "@/lib/astrology";
 import { useApp } from "@/contexts/app";
