@@ -1,7 +1,7 @@
 "use client";
 // Birth-data form (date, time, place, coordinates, prediction theme).
 // Picking a preset city fills lat/lon; "Autre" unlocks manual coordinates.
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { THEME_CONFIG } from "@/lib/astrology";
 import { useApp } from "@/contexts/app";
 
@@ -58,12 +58,6 @@ export default function AstroForm({ onSubmit, loading, defaultValues }: Props) {
     theme:      defaultValues?.theme      ?? "global",
   });
 
-  // When share URL is decoded after mount, sync form fields
-  useEffect(() => {
-    if (!defaultValues || Object.keys(defaultValues).length === 0) return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional sync when share defaults arrive after mount
-    setFormData((prev) => ({ ...prev, ...defaultValues }));
-  }, [defaultValues]);
 
   const handleCityChange = (city: string) => {
     const found = CITIES.find((c) => c.name === city);
