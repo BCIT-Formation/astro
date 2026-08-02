@@ -7,7 +7,7 @@ on:
 jobs:
   conventional-commit-title:
     name: Validate PR title (Conventional Commits)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     steps:
       - name: Check PR title format
         env:
@@ -37,7 +37,7 @@ jobs:
 
   auto-assign:
     name: Auto-assign reviewers
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     if: github.event.action == 'opened'
     steps:
       - name: Auto-assign PR author

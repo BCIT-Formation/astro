@@ -13,7 +13,7 @@ concurrency:
 jobs:
   ci:
     name: Lint · Typecheck · Build · Test
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 15
 
     steps:
@@ -48,7 +48,7 @@ jobs:
 
   e2e:
     name: E2E Tests (Playwright)
-    runs-on: blacksmith-4vcpu-ubuntu-2404
+    runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: ci
 
